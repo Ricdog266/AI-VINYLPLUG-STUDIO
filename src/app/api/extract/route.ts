@@ -9,36 +9,35 @@ export async function POST(req: Request) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Missing OPENAI_API_KEY on server (Render env var)." },
+        { error: "Missing OPENAI_API_KEY on server." },
         { status: 500 }
       );
     }
 
     const prompt = `
-You are a "Persona Extractor / Suno Optimization Machine".
+You are a Suno Persona Optimization Engine.
 
-INPUTS:
-- personaName: ${body.personaName}
-- genre: ${body.genre}
-- bpm: ${body.bpm}
-- artist: ${body.artist || "(none)"}
-- refSongs: ${body.refSongs || "(none)"}
-- notes: ${body.notes || "(none)"}
+INPUT:
+Persona Name: ${body.personaName}
+Genre: ${body.genre}
+BPM: ${body.bpm}
+Artist Ref: ${body.artist || "None"}
+Reference Songs: ${body.refSongs || "None"}
+Notes: ${body.notes || "None"}
 
-SLIDERS (0-100):
+SLIDERS:
 ${JSON.stringify(body.sliders, null, 2)}
 
-OUTPUT REQUIREMENTS:
 Return JSON with:
-1) "style_of_music" (1 paragraph optimized for Suno "Style of Music")
-2) "lyrics_structure" (Intro / Verse / Hook / Verse / Hook / Bridge / Hook)
-3) "hooks" (3 hook options, short + catchy)
-4) "adlibs" (10 adlibs matching vibe)
-5) "mix_notes" (drums/808/vocal FX notes)
-Keep it tight, punchy, and production-ready.
+- style_of_music
+- lyrics_structure
+- 3_hooks
+- adlibs (10)
+- mix_notes
+Make it tight, punchy, Suno-ready.
 `;
 
-    const r = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,24 +49,24 @@ Keep it tight, punchy, and production-ready.
       }),
     });
 
-    if (!r.ok) {
-      const errText = await r.text();
+    if (!response.ok) {
+      const errorText = await response.text();
       return NextResponse.json(
-        { error: "OpenAI request failed", details: errText },
+        { error: "OpenAI request failed", details: errorText },
         { status: 500 }
       );
     }
 
-    const data = await r.json();
+    const data = await response.json();
     const text =
       data.output_text ||
       data.output?.[0]?.content?.[0]?.text ||
       JSON.stringify(data);
 
-    return NextResponse.json({ ok: true, result: text });
-  } catch (e: any) {
+    return NextResponse.json({ result: text });
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Server error", details: String(e) },
+      { error: "Server error", details: String(error) },
       { status: 500 }
     );
   }
